@@ -1,17 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingCart, User, Menu, X, Search } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { ShoppingCart, User, Menu, X, MapPin, Phone, LayoutGrid } from 'lucide-react'
+import { useState, useEffect, Suspense } from 'react'
 import { useCartStore } from '@/lib/cart-store'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from './ui/Button'
+import { SearchBar } from './SearchBar'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const totalItems = useCartStore((state) => state.items.length)
+  const totalItems = useCartStore((state) => state.getTotalItems())
+  const subtotal = useCartStore((state) => state.getSubtotal())
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
@@ -40,135 +41,169 @@ export function Header() {
   const navLinks = [
     { href: '/shop', label: 'Shop' },
     { href: '/categories', label: 'Categories' },
-    { href: '/about', label: 'About' },
-    { href: '/contact', label: 'Contact' },
+    { href: '/shop?sale=true', label: 'Offers' },
+    { href: '/#why-us', label: 'About' },
+    { href: '/#delivery', label: 'Delivery' },
   ]
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-300 w-full ${
-        isScrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg shadow-black/5'
-          : 'bg-white border-b border-gray-100'
-      }`}
-    >
-      {/* FIX 1: Replaced max-w-7xl with container-custom to center and align the navbar with your homepage layout grid */}
-      <div className="container-custom w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-21">
-          
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
-            <div className="w-10 h-10 lg:w-11 lg:h-11 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] rounded-xl flex items-center justify-center shadow-[var(--shadow-green)] transition-transform duration-300 group-hover:scale-105">
-              <span className="text-white text-lg lg:text-xl font-extrabold tracking-tight">DG</span>
-            </div>
-            <div className="hidden sm:flex flex-col">
-              <span className="text-lg lg:text-xl font-extrabold text-gray-900 leading-none tracking-tight">
-                Deshi Grocery
-              </span>
-              <span className="text-xs text-[var(--primary)] font-medium mt-0.5">Fresh Halal Delivery</span>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          {/* FIX 2: Replaced gap-1 with gap-x-6 lg:gap-x-8 to space the links out elegantly and look highly professional */}
-          <nav className="hidden md:flex items-center gap-x-6 lg:gap-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="relative px-3 py-1.5 text-gray-700 hover:text-[var(--primary)] font-semibold text-[15px] tracking-wide transition-colors duration-200 rounded-lg hover:bg-[var(--primary-lighter)] group"
-              >
-                {link.label}
-                {/* Micro-interaction: Animated green bar underline line */}
-                <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[var(--primary)] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-              </Link>
-            ))}
-          </nav>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Search - Desktop */}
-            <Link
-              href="/shop"
-              className="hidden md:flex items-center justify-center w-10 h-10 text-gray-600 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-xl transition-all duration-200"
+    <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
+      {/* ── Top strip ── */}
+      <div className="w-full bg-[var(--primary-dark)] text-white">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center sm:justify-between h-8 text-xs font-medium">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3 h-3" />
+              Free delivery on orders over €50 — Dublin only
+            </span>
+            <a
+              href="tel:+35312345678"
+              className="hidden sm:flex items-center gap-1.5 hover:text-emerald-200 transition-colors"
             >
-              <Search className="w-5 h-5" />
-            </Link>
-
-            {/* Divider */}
-            <div className="hidden md:block w-px h-6 bg-gray-200 mx-1" />
-
-            {/* Account */}
-            <Link
-              href={user ? '/account' : '/auth/login'}
-              className="flex items-center justify-center w-10 h-10 text-gray-600 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-xl transition-all duration-200"
-            >
-              <User className="w-5 h-5" />
-            </Link>
-
-            {/* Cart */}
-            <Link
-              href="/cart"
-              className="relative flex items-center justify-center w-10 h-10 text-gray-600 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-xl transition-all duration-200"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {hydrated && totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[var(--primary)] text-white text-[11px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg animate-scale-in">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden flex items-center justify-center w-10 h-10 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+              <Phone className="w-3 h-3" />
+              +353 1 234 5678
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white animate-fade-in-down">
-          <nav className="container-custom w-full mx-auto px-4 sm:px-6 py-4">
-            <div className="flex flex-col gap-1">
+      {/* ── Main header row ── */}
+      <div
+        className={`w-full bg-white transition-shadow duration-300 ${
+          isScrolled ? 'shadow-md' : ''
+        }`}
+      >
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 md:gap-6 h-16 lg:h-[72px]">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
+              <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center shadow-[var(--shadow-green)] transition-transform duration-300 group-hover:scale-105">
+                <span className="text-white text-lg font-extrabold tracking-tight">DG</span>
+              </div>
+              <div className="hidden sm:flex flex-col">
+                <span className="text-lg font-extrabold text-gray-900 leading-none tracking-tight">
+                  Deshi Grocery
+                </span>
+                <span className="text-[11px] text-[var(--primary)] font-semibold mt-0.5">
+                  Fresh Halal Delivery
+                </span>
+              </div>
+            </Link>
+
+            {/* Search — Borobazar-style prominent centered bar */}
+            <div className="hidden md:flex flex-1 max-w-xl mx-auto">
+              <Suspense
+                fallback={
+                  <div className="w-full h-11 bg-gray-100 rounded-full animate-pulse" />
+                }
+              >
+                <SearchBar />
+              </Suspense>
+            </div>
+
+            {/* Right actions */}
+            <div className="flex items-center gap-2 md:gap-3 ml-auto">
+              {/* Account */}
+              <Link
+                href={user ? '/admin' : '/auth/login'}
+                className="hidden sm:flex items-center justify-center w-10 h-10 text-gray-600 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-full transition-all duration-200"
+                aria-label={user ? 'Account' : 'Sign in'}
+              >
+                <User className="w-5 h-5" />
+              </Link>
+
+              {/* Cart — green pill with total (Borobazar signature) */}
+              <Link
+                href="/cart"
+                className="flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-full pl-3 pr-4 h-10 shadow-[var(--shadow-green)] transition-all duration-200"
+              >
+                <span className="relative">
+                  <ShoppingCart className="w-5 h-5" />
+                  {hydrated && totalItems > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-[var(--accent)] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow">
+                      {totalItems}
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm font-bold">
+                  {hydrated && subtotal > 0 ? `€${subtotal.toFixed(2)}` : 'Cart'}
+                </span>
+              </Link>
+
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden flex items-center justify-center w-10 h-10 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Toggle menu"
+              >
+                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile search */}
+        <div className="md:hidden border-t border-gray-100 px-4 py-2.5">
+          <Suspense
+            fallback={<div className="w-full h-10 bg-gray-100 rounded-full animate-pulse" />}
+          >
+            <SearchBar compact={false} />
+          </Suspense>
+        </div>
+
+        {/* ── Nav row ── */}
+        <nav className="hidden md:block border-t border-gray-100">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-1 h-11">
+              <Link
+                href="/categories"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-[var(--primary)] bg-[var(--primary-lighter)] rounded-lg mr-2"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                All Categories
+              </Link>
               {navLinks.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.href + link.label}
                   href={link.href}
-                  className="px-4 py-3 text-gray-700 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-xl font-medium transition-all duration-200"
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-[var(--primary)] hover:bg-gray-50 rounded-lg transition-colors duration-150"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      {/* ── Mobile menu ── */}
+      {isMenuOpen && (
+        <div className="md:hidden border-t border-gray-100 bg-white">
+          <nav className="container-custom mx-auto px-4 py-3">
+            <div className="flex flex-col">
+              {[{ href: '/categories', label: 'All Categories' }, ...navLinks].map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  className="px-3 py-3 text-gray-700 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-lg font-medium transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="border-t border-gray-100 my-2" />
+              <div className="border-t border-gray-100 my-1" />
               <Link
-                href="/shop"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-xl font-medium transition-all duration-200"
+                href={user ? '/admin' : '/auth/login'}
+                className="flex items-center gap-3 px-3 py-3 text-gray-700 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-lg font-medium transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <Search className="w-5 h-5" />
-                Search Products
+                <User className="w-5 h-5" />
+                {user ? 'My Account' : 'Sign In'}
               </Link>
             </div>
           </nav>
         </div>
       )}
-
-      {/* Delivery Banner */}
-      <div className="w-full bg-gradient-to-r from-[var(--primary)] via-[var(--primary-hover)] to-[var(--primary-dark)] text-white py-2.5 px-4 flex justify-center">
-        <div className="container-custom w-full flex items-center justify-center gap-2 text-sm font-medium">
-          <span className="hidden sm:inline">🚚</span>
-          <span>Free delivery on orders over €50</span>
-          <span className="hidden sm:inline">•</span>
-          <span className="hidden sm:inline">Dublin Only</span>
-          <span className="sm:hidden">• Dublin Only</span>
-        </div>
-      </div>
     </header>
   )
 }

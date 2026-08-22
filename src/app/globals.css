@@ -82,12 +82,12 @@
   --shadow-inner: var(--shadow-inner);
 }
 
-/* Reset & Base */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Reset & Base
+   Tailwind's Preflight already applies `margin: 0; padding: 0;
+   box-sizing: border-box` to all elements inside @layer base.
+   Do NOT add an un-layered `*` reset here: un-layered author CSS beats
+   every cascade layer, so it would silently disable ALL Tailwind
+   spacing utilities (py-*, px-*, mt-*, mb-*, p-*, m-*) site-wide. */
 
 html {
   scroll-behavior: smooth;
@@ -111,6 +111,15 @@ body {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+
+/* Utility to visually hide scrollbars on horizontal carousels (keeps them scrollable/swipeable) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
 /* Focus */
 :focus-visible {
@@ -277,15 +286,10 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-/* Custom utility rule to force separation between layout elements */
-main + footer {
-  margin-top: 5rem !important; /* Dynamically creates a 80px space between page and footer components */
-}
-
-/* Forces a clean, intentional whitespace gap between the white newsletter bar and the dark footer links grid */
-footer > div:nth-child(1) + div:nth-child(2) {
-  margin-top: 4rem !important; /* Forces the layout down regardless of the global reset */
-}
+/* Section-to-footer spacing is handled by real utility classes now
+   (page sections use py-*, the footer uses pt-12 md:pt-16, and the dark
+   footer block uses mt-16 md:mt-24). The old `!important` margin hacks
+   that compensated for the broken cascade have been removed. */
 
 /* ─────────────────────────────────────────────────────────────
    GLOBAL AUTOMATIC PAGE CENTERING LAYOUT

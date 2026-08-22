@@ -1,10 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { ChevronRight, Package } from 'lucide-react'
+import Image from 'next/image'
+import { createClient } from '@/lib/supabase/server'
+import { getCategoryIcon } from '@/lib/category-data'
+import { ChevronRight, ArrowRight } from 'lucide-react'
 
 export const metadata = {
-  title: 'Categories - Deshi Grocery',
-  description: 'Browse our categories of fresh halal meat, fish, and groceries',
+  title: 'Categories — Deshi Grocery',
+  description:
+    'Browse fresh halal meat, fish, rice, spices and grocery categories.',
 }
 
 export const revalidate = 60
@@ -12,26 +15,31 @@ export const revalidate = 60
 export default async function CategoriesPage() {
   const supabase = await createClient()
 
-  // Fetch all categories with product counts
   const { data: categories } = await supabase
     .from('categories')
-    .select('*, products:products(count)')
+    .select('*')
     .eq('is_active', true)
     .order('display_order', { ascending: true })
 
-  // Fallback emoji icons for categories without images
-  const categoryIcons: Record<string, string> = {
-    chicken: '🐔',
-    lamb: '🐑',
-    beef: '🥩',
-    fish: '🐟',
-  }
+  // Get product counts per category in one query
+  const { data: products } = await supabase
+    .from('products')
+    .select('category_id')
+    .eq('is_available', true)
+
+  const counts: Record<string, number> = {}
+  ;(products || []).forEach((p: { category_id: string | null }) => {
+    if (p.category_id) counts[p.category_id] = (counts[p.category_id] || 0) + 1
+  })
+
+  const hasImage = (url: string | null) =>
+    !!url && (url.startsWith('http://') || url.startsWith('https://'))
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
+    <div className="w-full min-h-screen bg-[var(--background-alt)]">
+      <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <Link href="/" className="hover:text-[var(--primary)]">
             Home
           </Link>
@@ -39,72 +47,74 @@ export default async function CategoriesPage() {
           <span className="text-gray-900 font-medium">Categories</span>
         </nav>
 
-        {/* Page Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        {/* Header */}
+        <div className="mb-8 md:mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             Shop by Category
           </h1>
-          <p className="text-lg text-gray-600">
-            Browse our selection of fresh halal products by category
+          <p className="text-gray-600">
+            Everything your kitchen needs — fresh halal meat, pantry staples and more.
           </p>
         </div>
 
-        {/* Categories Grid */}
+        {/* Category grid */}
         {categories && categories.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {(categories as any[]).map((category) => {
-              const icon = categoryIcons[category.slug] || '🥩'
-              const hasImage = category.image_url && (
-                category.image_url.startsWith('http://') || 
-                category.image_url.startsWith('https://')
-              )
-              
+              const count = counts[category.id] || 0
               return (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
-                  className="group"
+                  className="group bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[var(--primary)]"
                 >
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-[var(--primary)] hover:-translate-y-2">
-                    <div className="relative h-56 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-t from-white/50 to-transparent" />
-                      {hasImage ? (
-                        <img
-                          src={category.image_url}
-                          alt={category.name}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <span className="text-8xl group-hover:scale-125 transition-transform duration-500 relative z-10">{icon}</span>
-                      )}
-                      <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-[var(--primary)] text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                        Fresh
+                  {/* Image */}
+                  <div className="relative aspect-[4/3] bg-gradient-to-br from-[var(--primary-lighter)] to-emerald-50 overflow-hidden">
+                    {hasImage(category.image_url) ? (
+                      <Image
+                        src={category.image_url}
+                        alt={category.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-6xl md:text-7xl group-hover:scale-110 transition-transform duration-300" role="img" aria-hidden="true">
+                          {getCategoryIcon(category.slug)}
+                        </span>
                       </div>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="font-bold text-xl text-gray-900 group-hover:text-[var(--primary)] transition-colors mb-2">
+                    )}
+                    {count > 0 && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
+                        {count} {count === 1 ? 'item' : 'items'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Label */}
+                  <div className="p-4 md:p-5 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-gray-900 group-hover:text-[var(--primary)] transition-colors truncate">
                         {category.name}
                       </h3>
                       {category.description && (
-                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
                           {category.description}
                         </p>
                       )}
-                      <div className="flex items-center text-sm text-[var(--primary)] font-semibold">
-                        <span>View Products</span>
-                        <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                      </div>
                     </div>
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--primary-lighter)] flex items-center justify-center group-hover:bg-[var(--primary)] transition-colors">
+                      <ArrowRight className="w-4 h-4 text-[var(--primary)] group-hover:text-white transition-colors" />
+                    </span>
                   </div>
                 </Link>
               )
             })}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <p className="text-gray-600 text-lg">
-              No categories available at the moment.
-            </p>
+          <div className="bg-white rounded-3xl border border-gray-100 py-16 text-center">
+            <p className="text-gray-600">No categories available at the moment.</p>
           </div>
         )}
       </div>

@@ -82,9 +82,9 @@ function CheckoutSuccessContent() {
           )}
 
           <div className="space-y-3">
-            <Link href="/account/orders">
+            <Link href="/">
               <Button variant="primary" size="lg" className="w-full text-base shadow-lg">
-                Track Your Order
+                Continue Shopping
                 <Package className="w-5 h-5" />
               </Button>
             </Link>

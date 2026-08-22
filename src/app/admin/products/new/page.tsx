@@ -84,7 +84,7 @@ export default function NewProductPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8">
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8 space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="bg-white rounded-lg shadow-md p-8 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>

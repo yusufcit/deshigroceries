@@ -34,6 +34,23 @@ export interface Product {
   created_at: string
   updated_at: string
   category?: Category
+  /** ISO date string — sale is active when now >= sale_start_date */
+  sale_start_date: string | null
+  /** ISO date string — sale is active when now < sale_end_date */
+  sale_end_date: string | null
+  sku: string | null
+}
+
+/**
+ * A computed view of a product's effective pricing.
+ * The backend (PriceDisplay, API) should always be authoritative.
+ */
+export interface ProductPricing {
+  regularPrice: number
+  salePrice: number | null
+  discountPercentage: number
+  isOnSale: boolean
+  isSaleActive: boolean
 }
 
 export interface Customer {

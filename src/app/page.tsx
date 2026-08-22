@@ -1,158 +1,139 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button } from '@/components/ui/Button'
 import { ProductCard } from '@/components/ProductCard'
-import { createClient } from '@/lib/supabase/server'
-import { Product, Category } from '@/lib/types'
-import { TruckIcon, ShieldCheckIcon, ClockIcon, TagIcon, ArrowRight, Leaf, Sparkles } from 'lucide-react'
+import { ProductCarousel } from '@/components/ProductCarousel'
+import { TrustCard } from '@/components/TrustCard'
+import { PromoBanner } from '@/components/PromoBanner'
+import { HeroOffersCarousel } from '@/components/HeroOffersCarousel'
+import { getHomepageData } from '@/lib/homepage-data'
+import { getCategoryIcon, TRUST_CARDS } from '@/lib/category-data'
+import {
+  ShieldCheck, Leaf, Truck, ShoppingBag, ArrowRight,
+  Flame, BadgeCheck, Clock, Star,
+} from 'lucide-react'
 
 export const revalidate = 60
 
+export const metadata = {
+  title: 'Deshi Grocery — Fresh Halal Groceries Delivered in Dublin',
+  description:
+    'Shop quality halal meat, fish, groceries and everyday essentials from trusted suppliers. Free delivery in Dublin on orders over €50.',
+}
+
+const trustIcons = [
+  <ShieldCheck key="1" className="w-7 h-7 text-[var(--primary)]" />,
+  <Leaf key="2" className="w-7 h-7 text-[var(--primary)]" />,
+  <Truck key="3" className="w-7 h-7 text-[var(--primary)]" />,
+  <ShoppingBag key="4" className="w-7 h-7 text-[var(--primary)]" />,
+]
+
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=80'
+const MEAT_BANNER =
+  'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=1600&q=80'
+const PANTRY_BANNER =
+  'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=1600&q=80'
+
 export default async function Home() {
-  const supabase = await createClient()
+  const {
+    categories,
+    featuredProducts,
+    saleProducts,
+    latestProducts,
+    meatProducts,
+    pantryProducts,
+    frozenProducts,
+  } = await getHomepageData()
 
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true })
-
-  const { data: featuredProducts } = await supabase
-    .from('products')
-    .select('*, category:categories(*)')
-    .eq('is_available', true)
-    .eq('is_featured', true)
-    .limit(8)
-
-  const { data: latestProducts } = await supabase
-    .from('products')
-    .select('*, category:categories(*)')
-    .eq('is_available', true)
-    .order('created_at', { ascending: false })
-    .limit(8)
-
-  const categoryIcons: Record<string, string> = {
-    chicken: '🐔',
-    lamb: '🐑',
-    beef: '🥩',
-    fish: '🐟',
-  }
-
-  const trustBadges = [
-    {
-      icon: TruckIcon,
-      title: 'Fast Delivery',
-      desc: 'Same-day delivery available',
-      color: 'from-emerald-500 to-green-600',
-    },
-    {
-      icon: ShieldCheckIcon,
-      title: '100% Halal',
-      desc: 'Certified halal products',
-      color: 'from-green-500 to-teal-600',
-    },
-    {
-      icon: ClockIcon,
-      title: 'Fresh Daily',
-      desc: 'Sourced fresh every day',
-      color: 'from-teal-500 to-emerald-600',
-    },
-    {
-      icon: TagIcon,
-      title: 'Best Prices',
-      desc: 'Competitive pricing',
-      color: 'from-emerald-600 to-green-700',
-    },
-  ]
+  const popularProducts =
+    featuredProducts.length > 0 ? featuredProducts : latestProducts
 
   return (
-    <div className="w-full flex flex-col items-center gap-y-20 md:gap-y-32 bg-white">
-    {/* ─── HERO SECTION ─── */}
-      <section className="w-full bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex justify-center">
-      {/* CHANGE THIS INNER DIV LINE: Add pb-32 or pb-40 to handle the floating card overlap */}
-        <div className="container-custom w-full pt-16 pb-32 md:pt-24 md:pb-40 lg:pt-32">
-
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-green-200 rounded-full px-4 py-2 mb-6 shadow-sm">
-                <Sparkles className="w-4 h-4 text-[var(--primary)]" />
-                <span className="text-sm font-semibold text-[var(--primary)]">Premium Halal Groceries</span>
+    <div className="w-full bg-white">
+      {/* ═══════════ 1. HERO ═══════════ */}
+      <section className="w-full bg-gradient-to-br from-[var(--primary-lighter)] via-white to-amber-50/60">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 lg:py-20">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+            {/* Copy */}
+            <div>
+              <div className="inline-flex items-center gap-2 bg-white border border-emerald-100 rounded-full px-4 py-1.5 mb-6 shadow-sm">
+                <BadgeCheck className="w-4 h-4 text-[var(--primary)]" />
+                <span className="text-sm font-semibold text-[var(--primary-dark)]">
+                  100% Halal Certified
+                </span>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-gray-900 mb-6 leading-[1.1] tracking-tight">
-                Fresh Halal Meat{' '}
-                <span className="gradient-text">& Fish</span>{' '}
-                <br className="hidden sm:block" />
-                <span className="relative">
-                  Delivered
-                  <svg className="absolute -bottom-2 left-0 w-full h-3 text-[var(--primary)]" viewBox="0 0 200 12" fill="none">
-                    <path d="M1 10C50 2 100 2 199 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.3"/>
-                  </svg>
-                </span>{' '}
-                to Your Door
+              <h1 className="text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold text-gray-900 leading-[1.08] tracking-tight mb-5">
+                Fresh Halal Groceries,{' '}
+                <span className="text-[var(--primary)]">Delivered</span> to Your
+                Door
               </h1>
-              <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl leading-relaxed">
-                Premium quality halal groceries at competitive prices. 
-                Order online and get same-day delivery across Dublin. 
-                Freshness guaranteed, every time.
+              <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-xl">
+                Shop quality halal meat, fish, groceries and everyday essentials
+                from trusted suppliers — delivered across Dublin.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/shop">
-                  <Button size="lg" className="w-full sm:w-auto text-base shadow-lg hover:shadow-xl">
-                    Shop Now
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
+              <div className="flex flex-col sm:flex-row gap-3 mb-10">
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white font-bold px-8 py-3.5 rounded-full shadow-[var(--shadow-green)] hover:shadow-[var(--shadow-green-lg)] transition-all duration-200"
+                >
+                  Shop Now
+                  <ArrowRight className="w-5 h-5" />
                 </Link>
-                <Link href="/categories">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-base">
-                    Browse Categories
-                  </Button>
+                <Link
+                  href="/shop?sale=true"
+                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-900 font-bold px-8 py-3.5 rounded-full border border-gray-200 shadow-sm transition-all duration-200"
+                >
+                  <Flame className="w-5 h-5 text-[var(--accent)]" />
+                  View Offers
                 </Link>
               </div>
-              
-              {/* Stats */}
-              <div className="flex items-center gap-6 mt-10 pt-8 border-t border-gray-200">
-                <div className="flex -space-x-2">
-                  {['👨‍👩‍👧‍👦', '🥩', '🐟', '🐔'].map((emoji, i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 bg-white rounded-full border-2 border-gray-100 flex items-center justify-center text-lg shadow-sm"
-                    >
-                      {emoji}
-                    </div>
-                  ))}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+                <span className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-[var(--primary)]" />
+                  Free delivery over €50
+                </span>
+                <span className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[var(--primary)]" />
+                  Same-day delivery
+                </span>
+                <span className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-[var(--accent)] fill-[var(--accent)]" />
+                  Trusted by Dublin families
+                </span>
+              </div>
+            </div>
+            {/* Visual — interactive Offers carousel (static image fallback when no offers) */}
+            <div className="relative">
+              {saleProducts.length > 0 ? (
+                <HeroOffersCarousel products={saleProducts} />
+              ) : (
+                <div className="relative aspect-[4/3] lg:aspect-[5/4] rounded-[2rem] overflow-hidden shadow-2xl">
+                  <Image
+                    src={HERO_IMAGE}
+                    alt="Fresh groceries and vegetables"
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <div className="absolute -bottom-5 -left-4 md:-left-8 bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-[var(--primary-lighter)] flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Trusted by <span className="text-[var(--primary)]">500+</span> families</p>
-                  <p className="text-xs text-gray-500">in Dublin, Ireland</p>
+                  <p className="text-sm font-bold text-gray-900">100% Halal</p>
+                  <p className="text-xs text-gray-500">Certified suppliers</p>
                 </div>
               </div>
-            </div>
-            
-            <div className="relative animate-fade-in-up stagger-2">
-              <div className="relative aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-400 via-[var(--primary)] to-teal-700 shadow-2xl shadow-green-500/20">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
-                {/* Decorative Elements */}
-                <div className="absolute top-6 left-6 w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 flex items-center justify-center animate-float">
-                  <span className="text-4xl">🥩</span>
+              <div className="absolute -top-4 -right-3 md:-right-6 bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center">
+                  <Truck className="w-6 h-6 text-[var(--accent)]" />
                 </div>
-                <div className="absolute top-6 right-6 w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 flex items-center justify-center animate-float stagger-2">
-                  <span className="text-3xl">🐟</span>
-                </div>
-                <div className="absolute bottom-6 left-6 w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 flex items-center justify-center animate-float stagger-3">
-                  <span className="text-3xl">🐔</span>
-                </div>
-                <div className="absolute bottom-6 right-6 w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 flex items-center justify-center animate-float stagger-4">
-                  <span className="text-4xl">🐑</span>
-                </div>
-                {/* Center Content */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <div className="w-32 h-32 md:w-40 md:h-40 mx-auto mb-4 bg-white/15 backdrop-blur-md rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
-                      <Leaf className="w-16 h-16 md:w-20 md:h-20 text-white" />
-                    </div>
-                    <p className="text-white/90 text-lg md:text-xl font-semibold">100% Halal Certified</p>
-                    <p className="text-white/60 text-sm mt-1">Premium Quality Guaranteed</p>
-                  </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Fast Delivery</p>
+                  <p className="text-xs text-gray-500">Across Dublin</p>
                 </div>
               </div>
             </div>
@@ -160,247 +141,373 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ─── TRUST BADGES SECTION ─── */}
-      <section className="w-full bg-white flex justify-center border-t border-b border-gray-100 pt-24 pb-16">
-        <div className="container-custom w-full">
-          
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Why Choose Deshi Grocery?</h2>
-            <p className="text-gray-600 text-lg">We deliver quality, freshness, and convenience</p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-            {trustBadges.map((badge) => {
-              const IconComponent = badge.icon;
-              return (
-                <div
-                  key={badge.title}
-                  className="group relative bg-white rounded-2xl border border-gray-100 p-6 text-center hover:shadow-xl hover:border-[var(--primary)] transition-all duration-300 card-hover"
-                >
-                  <div className={`w-14 h-14 mx-auto rounded-xl bg-gradient-to-br ${badge.color} text-white flex items-center justify-center mb-5 shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2 text-lg">{badge.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{badge.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
-
-
-
-
-
-    {/* Categories */}
-      {categories && categories.length > 0 && (
-        <section className="w-full bg-gray-50/50 flex justify-center border-b border-gray-100">
-          {/* FIX: Increased padding from py-16 to py-20 md:py-24 for better vertical spacing */}
-          <div className="container-custom w-full py-20 md:py-24">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+      {/* ═══════════ 2. SHOP BY CATEGORY ═══════════ */}
+      {categories.length > 0 && (
+        <section className="w-full py-14 md:py-20">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-8">
               <div>
-                <span className="text-sm font-semibold text-[var(--primary)] uppercase tracking-wider">Categories</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                   Shop by Category
                 </h2>
-                <p className="text-lg text-gray-600 mt-2">
-                  Browse our selection of fresh halal products
+                <p className="text-gray-600 mt-1">
+                  Everything your kitchen needs, organised
                 </p>
               </div>
-              <Link href="/categories">
-                <Button variant="outline" size="md">
-                  View All Categories
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+              <Link
+                href="/categories"
+                className="hidden sm:inline-flex items-center gap-1 text-[var(--primary)] hover:text-[var(--primary-hover)] font-semibold text-sm"
+              >
+                View All
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {(categories as Category[]).map((category, index) => {
-                const icon = categoryIcons[category.slug] || '🥩'
-                const hasImage = category.image_url && (
-                  category.image_url.startsWith('http://') || 
-                  category.image_url.startsWith('https://')
-                )
-                return (
-                  <Link
-                    key={category.id}
-                    href={`/categories/${category.slug}`}
-                    className="group animate-fade-in-up"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-[var(--primary)] hover:-translate-y-2 card-hover">
-                      <div className="relative h-48 bg-gradient-to-br from-[var(--primary-lighter)] via-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-t from-white/50 to-transparent" />
-                        {hasImage ? (
-                          <img
-                            src={category.image_url || ''}
-                            alt={category.name}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        ) : (
-                          <span className="text-7xl group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 relative z-10">{icon}</span>
-                        )}
-                        <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-[var(--primary)] text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                          Fresh
-                        </div>
-                      </div>
-                      <div className="p-5 text-center">
-                        <h3 className="font-bold text-lg text-gray-900 group-hover:text-[var(--primary)] transition-colors">
-                          {category.name}
-                        </h3>
-                        {category.description && (
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{category.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-
-      {/* Featured Products */}
-      {featuredProducts && featuredProducts.length > 0 && (
-        <section className="w-full bg-white flex justify-center border-b border-gray-100">
-          {/* FIX: Changed py-16 to py-20 md:py-24 to keep the breathing room identical to categories */}
-          <div className="container-custom w-full py-20 md:py-24">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-              <div>
-                <span className="text-sm font-semibold text-[var(--primary)] uppercase tracking-wider">Featured</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">
-                  Featured Products
-                </h2>
-                <p className="text-lg text-gray-600 mt-2">
-                  Handpicked premium products just for you
-                </p>
-              </div>
-              <Link href="/shop">
-                <Button variant="outline" size="md">
-                  View All Products
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {(featuredProducts as Product[]).map((product, index) => (
-                <div
-                  key={product.id}
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: `${index * 100}ms` }}
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+              {categories.slice(0, 12).map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/categories/${category.slug}`}
+                  className="group flex flex-col items-center text-center bg-[var(--background-alt)] hover:bg-[var(--primary-lighter)] rounded-2xl p-4 md:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <ProductCard product={product} />
-                </div>
+                  <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-3 overflow-hidden">
+                    {category.image_url ? (
+                      <Image
+                        src={category.image_url}
+                        alt={category.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl md:text-3xl" role="img" aria-hidden="true">
+                        {getCategoryIcon(category.slug)}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs md:text-sm font-semibold text-gray-800 group-hover:text-[var(--primary)] line-clamp-2 leading-snug transition-colors">
+                    {category.name}
+                  </span>
+                </Link>
               ))}
             </div>
           </div>
         </section>
       )}
 
-
-      {/* Latest Products */}
-      {latestProducts && latestProducts.length > 0 && (
-        <section className="w-full bg-gray-50/50 flex justify-center border-b border-gray-100">
-          {/* FIX: Changed py-16 to py-20 md:py-24 to match your spacing system */}
-          <div className="container-custom w-full py-20 md:py-24">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+      {/* ═══════════ 3. THIS WEEK'S OFFERS (Sale carousel) ═══════════ */}
+      {saleProducts.length > 0 && (
+        <section className="w-full py-14 md:py-20 bg-gradient-to-br from-red-50/70 via-amber-50/40 to-white">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-8">
               <div>
-                <span className="text-sm font-semibold text-[var(--primary)] uppercase tracking-wider">New Arrivals</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">
-                  New Arrivals
+                <div className="inline-flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">
+                  <Flame className="w-3.5 h-3.5" />
+                  SALE
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  This Week&apos;s Offers
                 </h2>
-                <p className="text-lg text-gray-600 mt-2">
-                  Check out our latest products
+                <p className="text-gray-600 mt-1">
+                  Real discounts on real products — while stock lasts
                 </p>
               </div>
-              <Link href="/shop">
-                <Button variant="outline" size="md">
-                  View All New Arrivals
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+              <Link
+                href="/shop?sale=true"
+                className="hidden sm:inline-flex items-center gap-1 text-[var(--primary)] hover:text-[var(--primary-hover)] font-semibold text-sm"
+              >
+                View All Offers
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {(latestProducts as Product[]).map((product, index) => (
-                <div
-                  key={product.id}
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
           </div>
+          <ProductCarousel>
+            {saleProducts.map((product) => (
+              <div
+                key={product.id}
+                className="w-[180px] sm:w-[210px] lg:w-[240px] flex-shrink-0"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </ProductCarousel>
         </section>
       )}
 
-
-      {/* ─── CTA SECTION ─── */}
-      {/* Outer section cleanly manages full-width background and vertical breathing room */}
-      <section className="relative w-full flex justify-center bg-gradient-to-r from-[var(--primary)] via-[var(--primary-hover)] to-[var(--primary-dark)] py-20 md:py-28">
-
-        {/* FIX: Removed py-20 md:py-28 from here so padding doesn't double-stack on your footer */}
-        <div className="relative container-custom w-full text-center flex flex-col items-center">
-          
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-            <Sparkles className="w-4 h-4 text-yellow-300" />
-            <span className="text-sm font-semibold text-white">Special Offer</span>
-          </div>
-          
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight max-w-3xl">
-            Ready to order fresh halal groceries?
-          </h2>
-          
-          <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
-            Sign up now and get <span className="font-bold text-yellow-300">€5 off</span> your first order over €30
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
-            <Link href="/auth/register" className="w-full sm:w-auto">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="w-full sm:w-auto bg-white text-[var(--primary)] hover:bg-green-50 hover:shadow-2xl shadow-xl text-base"
+      {/* ═══════════ 4. POPULAR PRODUCTS ═══════════ */}
+      {popularProducts.length > 0 && (
+        <section className="w-full py-14 md:py-20">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  Our Most Popular Products
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Customer favourites, restocked daily
+                </p>
+              </div>
+              <Link
+                href="/shop"
+                className="hidden sm:inline-flex items-center gap-1 text-[var(--primary)] hover:text-[var(--primary-hover)] font-semibold text-sm"
               >
-                Sign Up Now
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href="/shop" className="w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto bg-transparent text-white border-white/60 hover:bg-white/10 hover:border-white text-base"
+                View All
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+          <ProductCarousel>
+            {popularProducts.map((product) => (
+              <div
+                key={product.id}
+                className="w-[180px] sm:w-[210px] lg:w-[240px] flex-shrink-0"
               >
-                Start Shopping
-              </Button>
-            </Link>
-          </div>
-          
-          {/* Trust indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-12 text-green-100/80 text-sm">
-            <span className="flex items-center gap-2">
-              <ShieldCheckIcon className="w-4 h-4" />
-              Secure Checkout
-            </span>
-            <span className="flex items-center gap-2">
-              <TruckIcon className="w-4 h-4" />
-              Free Delivery Over €50
-            </span>
-            <span className="flex items-center gap-2">
-              <ClockIcon className="w-4 h-4" />
-              Same-Day Delivery
-            </span>
-          </div>
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </ProductCarousel>
+        </section>
+      )}
 
+      {/* ═══════════ 5. PROMO BANNER ═══════════ */}
+      <section className="w-full py-8 md:py-14">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+          <PromoBanner
+            title="Fresh Halal Meat for Every Family Meal"
+            description="Quality chicken, beef and lamb selected with care — cut fresh and delivered chilled."
+            ctaLabel="Shop Fresh Meat"
+            ctaHref={meatProducts[0]?.category ? `/categories/${meatProducts[0].category.slug}` : '/shop'}
+            bgImage={MEAT_BANNER}
+          />
         </div>
       </section>
 
+
+      {/* ═══════════ 6. COLLECTION: FRESH MEAT ═══════════ */}
+      {meatProducts.length > 0 && (
+        <section className="w-full py-14 md:py-20 bg-[var(--background-alt)]">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  Fresh Meat
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Halal chicken, beef and lamb — cut fresh daily
+                </p>
+              </div>
+              {meatProducts[0]?.category && (
+                <Link
+                  href={`/categories/${meatProducts[0].category.slug}`}
+                  className="hidden sm:inline-flex items-center gap-1 text-[var(--primary)] hover:text-[var(--primary-hover)] font-semibold text-sm"
+                >
+                  View All
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+          <ProductCarousel>
+            {meatProducts.map((product) => (
+              <div
+                key={product.id}
+                className="w-[180px] sm:w-[210px] lg:w-[240px] flex-shrink-0"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </ProductCarousel>
+        </section>
+      )}
+
+      {/* ═══════════ 7. COLLECTION: PANTRY ESSENTIALS ═══════════ */}
+      {pantryProducts.length > 0 && (
+        <section className="w-full py-14 md:py-20">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  Pantry Essentials
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Rice, spices, oils and everyday staples
+                </p>
+              </div>
+              {pantryProducts[0]?.category && (
+                <Link
+                  href={`/categories/${pantryProducts[0].category.slug}`}
+                  className="hidden sm:inline-flex items-center gap-1 text-[var(--primary)] hover:text-[var(--primary-hover)] font-semibold text-sm"
+                >
+                  View All
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+          <ProductCarousel>
+            {pantryProducts.map((product) => (
+              <div
+                key={product.id}
+                className="w-[180px] sm:w-[210px] lg:w-[240px] flex-shrink-0"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </ProductCarousel>
+        </section>
+      )}
+
+      {/* ═══════════ 8. COLLECTION: FROZEN FAVOURITES ═══════════ */}
+      {frozenProducts.length > 0 && (
+        <section className="w-full py-14 md:py-20 bg-[var(--background-alt)]">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  Frozen Favourites
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Ready-to-cook convenience for busy days
+                </p>
+              </div>
+              {frozenProducts[0]?.category && (
+                <Link
+                  href={`/categories/${frozenProducts[0].category.slug}`}
+                  className="hidden sm:inline-flex items-center gap-1 text-[var(--primary)] hover:text-[var(--primary-hover)] font-semibold text-sm"
+                >
+                  View All
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+          <ProductCarousel>
+            {frozenProducts.map((product) => (
+              <div
+                key={product.id}
+                className="w-[180px] sm:w-[210px] lg:w-[240px] flex-shrink-0"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </ProductCarousel>
+        </section>
+      )}
+
+
+      {/* ═══════════ 9. SECOND PROMO BANNER ═══════════ */}
+      {pantryProducts.length > 0 && (
+        <section className="w-full py-8 md:py-14">
+          <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+            <PromoBanner
+              title="Authentic Spices & Pantry Staples"
+              description="Stock your kitchen with premium basmati rice, aromatic spices and everyday essentials."
+              ctaLabel="Shop Pantry"
+              ctaHref={pantryProducts[0]?.category ? `/categories/${pantryProducts[0].category.slug}` : '/shop'}
+              bgImage={PANTRY_BANNER}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════ 10. WHY CHOOSE US ═══════════ */}
+      <section id="why-us" className="w-full py-14 md:py-20 bg-[var(--background-alt)]">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10 md:mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+              Why Choose Deshi Grocery
+            </h2>
+            <p className="text-gray-600 mt-2 max-w-xl mx-auto">
+              The halal grocery store Dublin families trust for quality,
+              freshness and honest prices.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {TRUST_CARDS.map((card, i) => (
+              <TrustCard
+                key={card.title}
+                icon={trustIcons[i]}
+                title={card.title}
+                description={card.description}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ 11. DELIVERY INFO ═══════════ */}
+      <section id="delivery" className="w-full py-14 md:py-20">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                Delivery Across Dublin
+              </h2>
+              <p className="text-gray-600 leading-relaxed mb-6">
+                We deliver fresh halal groceries across Dublin city and suburbs.
+                Order before 2pm for same-day delivery on weekdays.
+              </p>
+              <ul className="space-y-3 text-gray-700">
+                <li className="flex items-start gap-3">
+                  <Truck className="w-5 h-5 text-[var(--primary)] mt-0.5 flex-shrink-0" />
+                  <span><strong>Free delivery</strong> on orders over €50</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-[var(--primary)] mt-0.5 flex-shrink-0" />
+                  <span><strong>Same-day delivery</strong> available Mon–Sat</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <BadgeCheck className="w-5 h-5 text-[var(--primary)] mt-0.5 flex-shrink-0" />
+                  <span><strong>Chilled transport</strong> keeps meat & fish fresh</span>
+                </li>
+              </ul>
+            </div>
+            <div className="bg-[var(--primary-lighter)] rounded-3xl p-8 md:p-10">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
+                Delivery Areas & Fees
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-white rounded-xl px-5 py-4 shadow-sm">
+                  <div>
+                    <p className="font-semibold text-gray-900">Dublin City</p>
+                    <p className="text-xs text-gray-500">D01 – D08</p>
+                  </div>
+                  <p className="font-bold text-[var(--primary)]">€4.99</p>
+                </div>
+                <div className="flex items-center justify-between bg-white rounded-xl px-5 py-4 shadow-sm">
+                  <div>
+                    <p className="font-semibold text-gray-900">Dublin Suburbs</p>
+                    <p className="text-xs text-gray-500">D09 – D24</p>
+                  </div>
+                  <p className="font-bold text-[var(--primary)]">€6.99</p>
+                </div>
+                <p className="text-xs text-gray-500 text-center pt-1">
+                  Free on all orders over €50
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ 12. FINAL CTA ═══════════ */}
+      <section className="w-full bg-[var(--primary-dark)] relative overflow-hidden">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center relative">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Your Weekly Groceries, Made Easy.
+          </h2>
+          <p className="text-lg text-emerald-100/90 mb-8 max-w-xl mx-auto">
+            Fresh halal meat, fish and pantry staples — delivered to your door
+            anywhere in Dublin.
+          </p>
+          <Link
+            href="/shop"
+            className="inline-flex items-center justify-center gap-2 bg-white text-[var(--primary-dark)] font-bold px-10 py-4 rounded-full shadow-xl hover:shadow-2xl hover:bg-emerald-50 transition-all duration-200 text-lg"
+          >
+            Start Shopping
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </section>
     </div>
   )
 }

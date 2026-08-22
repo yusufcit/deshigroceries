@@ -6,7 +6,7 @@ export default async function AdminSettingsPage() {
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/auth/login?next=/admin/settings')
 
   const { data: adminUser } = await supabase
     .from('admin_users')

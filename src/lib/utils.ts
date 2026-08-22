@@ -1,4 +1,12 @@
 /**
+ * Class name helper — merges and deduplicates tailwind classes.
+ * Simple implementation: concatenates non-empty strings.
+ */
+export function cn(...classes: (string | false | undefined | null)[]) {
+  return classes.filter(Boolean).join(' ')
+}
+
+/**
  * Format price in euros
  */
 export function formatPrice(amount: number): string {
@@ -6,6 +14,54 @@ export function formatPrice(amount: number): string {
     style: 'currency',
     currency: 'EUR',
   }).format(amount)
+}
+
+/**
+ * Get the effective pricing for a product, taking sale dates into account.
+ * This is the authoritative pricing function — always prefer this on the server.
+ */
+export function getProductPricing(product: {
+  price: number
+  compare_at_price?: number | null
+  sale_start_date?: string | null
+  sale_end_date?: string | null
+}): {
+  regularPrice: number
+  salePrice: number | null
+  discountPercentage: number
+  isOnSale: boolean
+  isSaleActive: boolean
+} {
+  const now = new Date()
+  let isSaleActive = false
+
+  if (product.sale_start_date && product.sale_end_date) {
+    const start = new Date(product.sale_start_date)
+    const end = new Date(product.sale_end_date)
+    isSaleActive = now >= start && now < end
+  }
+
+  // Fallback: if no sale dates are set but compare_at_price is lower, use it
+  if (!isSaleActive && product.compare_at_price && product.compare_at_price > product.price) {
+    isSaleActive = true
+  }
+
+  const salePrice = isSaleActive ? product.price : null
+  const regularPrice = product.compare_at_price && product.compare_at_price > product.price
+    ? product.compare_at_price
+    : product.price
+
+  const discountPercentage = salePrice && salePrice < regularPrice
+    ? Math.round(((regularPrice - salePrice) / regularPrice) * 100)
+    : 0
+
+  return {
+    regularPrice,
+    salePrice: salePrice && salePrice < regularPrice ? salePrice : null,
+    discountPercentage,
+    isOnSale: isSaleActive && salePrice !== null && salePrice < regularPrice,
+    isSaleActive,
+  }
 }
 
 /**
@@ -68,8 +124,8 @@ export function calculateDeliveryFee(eircode: string | undefined, zones: any[]):
   if (!eircode) return 4.99 // Default fee
 
   const prefix = eircode.substring(0, 3).toUpperCase()
-  
-  const zone = zones.find(z => 
+
+  const zone = zones.find(z =>
     z.is_active && z.eircode_prefixes.includes(prefix)
   )
 

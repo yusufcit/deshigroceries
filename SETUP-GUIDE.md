@@ -35,7 +35,7 @@ This guide will walk you through setting up your production-ready online halal g
 
 1. Once your project is ready, click on **SQL Editor** in the left sidebar
 2. Click **"New query"**
-3. Open the file `/Users/mdyusuf/Documents/deshigrocery/nextjs/supabase-schema.sql` on your computer
+3. Open the file `/Users/mdyusuf/Documents/deshigrocery/supabase-schema.sql` on your computer
 4. Copy the **entire content** of this file
 5. Paste it into the Supabase SQL Editor
 6. Click **"Run"** (or press Cmd/Ctrl + Enter)
@@ -83,7 +83,7 @@ This guide will walk you through setting up your production-ready online halal g
 
 1. Navigate to your project folder:
    ```bash
-   cd /Users/mdyusuf/Documents/deshigrocery/nextjs
+   cd /Users/mdyusuf/Documents/deshigrocery
    ```
 
 2. Open the file `.env.local` in your text editor
@@ -161,7 +161,7 @@ Repeat for a few more products to populate your store!
 
 1. Open Terminal and navigate to your project:
    ```bash
-   cd /Users/mdyusuf/Documents/deshigrocery/nextjs
+   cd /Users/mdyusuf/Documents/deshigrocery
    ```
 
 2. Start the development server:
@@ -248,7 +248,7 @@ Repeat for a few more products to populate your store!
 
 1. Initialize git (if not already done):
    ```bash
-   cd /Users/mdyusuf/Documents/deshigrocery/nextjs
+   cd /Users/mdyusuf/Documents/deshigrocery
    git init
    git add .
    git commit -m "Initial commit - Deshi Grocery"

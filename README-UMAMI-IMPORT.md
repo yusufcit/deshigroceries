@@ -33,9 +33,9 @@ Paste the whole `supabase-schema.sql` into the SQL Editor and run it. If you see
 file is now **idempotent**: it won't fail or duplicate anything, it only ensures
 all tables and policies exist.
 
-> **Prefer a one-command runner?** The `nextjs/` folder already contains
+> **Prefer a one-command runner?** The project root already contains
 > `scripts/run-supabase-sql.mjs` (uses `@supabase/supabase-js` credentials from
-> `.env.local`). From the `nextjs/` folder you can run:
+> `.env.local`). From the project root you can run:
 > ```bash
 > npm run import:schema   # runs supabase-schema.sql
 > npm run import:umami    # runs umami-foods-import.sql

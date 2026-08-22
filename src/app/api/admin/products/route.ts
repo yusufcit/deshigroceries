@@ -41,8 +41,33 @@ export async function POST(request: Request) {
   
   const { name, slug, description, price, compare_at_price, category_id, stock_quantity, image_url, is_available, is_featured } = body
 
-  if (!name || price === undefined || price === null) {
-    return NextResponse.json({ error: 'Name and price are required' }, { status: 400 })
+  // The admin forms submit with noValidate, so validate carefully here and
+  // return clear messages — the UI shows them as error toasts.
+
+  if (!name || !String(name).trim()) {
+    return NextResponse.json({ error: 'Product name is required' }, { status: 400 })
+  }
+
+  // Accepts "2.99" and "2,99" (comma decimals). null = empty/absent, NaN = invalid text.
+  const parseMoney = (v: unknown): number | null => {
+    if (v === undefined || v === null || String(v).trim() === '') return null
+    return parseFloat(String(v).replace(',', '.'))
+  }
+
+  const parsedPrice = parseMoney(price)
+  if (parsedPrice === null || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+    return NextResponse.json({ error: 'A valid price is required (e.g. 2.99)' }, { status: 400 })
+  }
+  const parsedCompareAt = parseMoney(compare_at_price)
+  if (parsedCompareAt !== null && !Number.isFinite(parsedCompareAt)) {
+    return NextResponse.json({ error: 'Compare at price must be a valid number' }, { status: 400 })
+  }
+  const parsedStock =
+    stock_quantity === undefined || stock_quantity === null || String(stock_quantity).trim() === ''
+      ? 0
+      : parseInt(String(stock_quantity), 10)
+  if (!Number.isFinite(parsedStock) || parsedStock < 0) {
+    return NextResponse.json({ error: 'Stock quantity must be a whole number' }, { status: 400 })
   }
 
   // Generate slug from name if not provided
@@ -52,10 +77,10 @@ export async function POST(request: Request) {
     name,
     slug: finalSlug,
     description: description || null,
-    price: parseFloat(price),
-    compare_at_price: compare_at_price ? parseFloat(compare_at_price) : null,
+    price: parsedPrice,
+    compare_at_price: parsedCompareAt,
     category_id: category_id || null,
-    stock_quantity: parseInt(stock_quantity) || 0,
+    stock_quantity: parsedStock,
     image_url: image_url || null,
     is_available: is_available ?? true,
     is_featured: is_featured ?? false,

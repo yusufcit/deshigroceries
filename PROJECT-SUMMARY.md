@@ -6,7 +6,7 @@ I've created a **complete, production-ready online halal grocery delivery platfo
 
 ## 📦 Project Overview
 
-**Location**: `/Users/mdyusuf/Documents/deshigrocery/nextjs`
+**Location**: `/Users/mdyusuf/Documents/deshigrocery`
 
 **Technology Stack**:
 - **Frontend**: Next.js 14 with TypeScript, Tailwind CSS
@@ -56,7 +56,7 @@ I've created a **complete, production-ready online halal grocery delivery platfo
 ## 📁 Project Structure
 
 ```
-nextjs/
+deshigrocery/
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx                    # Homepage
@@ -113,7 +113,7 @@ nextjs/
 
 4. **Run the Application** (2 min)
    ```bash
-   cd /Users/mdyusuf/Documents/deshigrocery/nextjs
+   cd /Users/mdyusuf/Documents/deshigrocery
    npm run dev
    ```
    - Open http://localhost:3000
@@ -338,7 +338,7 @@ Your online halal grocery store is **complete and ready to launch**!
 
 ### Quick Start Command:
 ```bash
-cd /Users/mdyusuf/Documents/deshigrocery/nextjs
+cd /Users/mdyusuf/Documents/deshigrocery
 npm run dev
 ```
 

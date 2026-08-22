@@ -11,7 +11,7 @@ export default async function AdminOrderDetailPage({
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/auth/login?next=/admin/orders')
 
   const { data: adminUser } = await supabase
     .from('admin_users')
