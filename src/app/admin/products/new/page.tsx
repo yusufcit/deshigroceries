@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/Button'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { ProductImageUpload } from '@/components/admin/ProductImageUpload'
 
 export default function NewProductPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -48,7 +50,7 @@ export default function NewProductPage() {
           compare_at_price: formData.compare_at_price || null,
           category_id: formData.category_id || null,
           stock_quantity: formData.stock_quantity,
-          image_url: formData.image_url || null,
+          image_url: uploadedImageUrl || formData.image_url || null,
           is_available: formData.is_available,
           is_featured: formData.is_featured,
         }),
@@ -181,6 +183,13 @@ export default function NewProductPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                 placeholder="https://example.com/image.jpg"
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Or upload an image <span className="text-gray-400 font-normal">(stored in Supabase)</span>
+              </label>
+              <ProductImageUpload value={uploadedImageUrl} onChange={setUploadedImageUrl} />
             </div>
 
             <div className="flex items-center gap-6">
