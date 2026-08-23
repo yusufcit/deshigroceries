@@ -263,6 +263,14 @@ DROP POLICY IF EXISTS "Admins can view all orders" ON orders;
 CREATE POLICY "Admins can view all orders" ON orders FOR SELECT USING (
     auth.uid() IN (SELECT id FROM admin_users WHERE is_active = true)
 );
+DROP POLICY IF EXISTS "Admins can view all customers" ON customers;
+CREATE POLICY "Admins can view all customers" ON customers FOR SELECT USING (
+    auth.uid() IN (SELECT id FROM admin_users WHERE is_active = true)
+);
+DROP POLICY IF EXISTS "Admins can view all addresses" ON addresses;
+CREATE POLICY "Admins can view all addresses" ON addresses FOR SELECT USING (
+    auth.uid() IN (SELECT id FROM admin_users WHERE is_active = true)
+);
 DROP POLICY IF EXISTS "Anyone can create orders" ON orders;
 CREATE POLICY "Anyone can create orders" ON orders FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "Admins can update orders" ON orders;

@@ -105,7 +105,7 @@ export function Header() {
             <div className="flex items-center gap-2 md:gap-3 ml-auto">
               {/* Account */}
               <Link
-                href={user ? '/admin' : '/auth/login'}
+                href={user ? '/account' : '/auth/login'}
                 className="hidden sm:flex items-center justify-center w-10 h-10 text-gray-600 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-full transition-all duration-200"
                 aria-label={user ? 'Account' : 'Sign in'}
               >
@@ -193,7 +193,7 @@ export function Header() {
               ))}
               <div className="border-t border-gray-100 my-1" />
               <Link
-                href={user ? '/admin' : '/auth/login'}
+                href={user ? '/account' : '/auth/login'}
                 className="flex items-center gap-3 px-3 py-3 text-gray-700 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-lg font-medium transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >

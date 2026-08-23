@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import type { Customer } from '@/lib/types'
 
 export default async function AdminCustomersPage() {
   const supabase = await createClient()
@@ -38,7 +40,9 @@ export default async function AdminCustomersPage() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-          <p className="text-gray-600 mt-1">View customer list</p>
+          <p className="text-gray-600 mt-1">
+            {customers?.length ?? 0} registered customer{(customers?.length ?? 0) === 1 ? '' : 's'} · click a name for full details
+          </p>
         </div>
       </div>
 
@@ -57,9 +61,13 @@ export default async function AdminCustomersPage() {
               </thead>
               <tbody>
                 {customers && customers.length > 0 ? (
-                  customers.map((customer: any) => (
+                  customers.map((customer: Customer) => (
                     <tr key={customer.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gray-900">{customer.full_name || 'N/A'}</td>
+                      <td className="py-3 px-4 font-medium">
+                        <Link href={`/admin/customers/${customer.id}`} className="text-[var(--primary)] hover:underline">
+                          {customer.full_name || 'N/A'}
+                        </Link>
+                      </td>
                       <td className="py-3 px-4 text-gray-600">{customer.email}</td>
                       <td className="py-3 px-4 text-gray-600">{customer.phone || 'N/A'}</td>
                       <td className="py-3 px-4">
