@@ -146,8 +146,9 @@ export async function POST(request: NextRequest) {
     const [slotStart, slotEnd] = deliverySlot.split('-')
     let slotId: string | null = null
     let reservedSlot = false
+    let tablesAbsent = false
     try {
-      const { data: slotRow } = await admin
+      const { data: slotRow, error: slotErr } = await admin
         .from('delivery_slots')
         .select('id')
         .eq('day_of_week', slotDow)
@@ -155,17 +156,28 @@ export async function POST(request: NextRequest) {
         .eq('end_time', `${slotEnd}:00`)
         .eq('is_active', true)
         .maybeSingle()
-      if (slotRow?.id) {
+      if (slotErr) {
+        // Table missing entirely -> non-admin deployment. Legacy fallback below.
+        tablesAbsent = true
+      } else if (slotRow?.id) {
         slotId = slotRow.id as string
         const { data: ok } = await admin
           .rpc('reserve_delivery_slot', { p_date: deliveryDate, p_slot_id: slotId })
         reservedSlot = ok === true
       }
+      // slotRow is null (no active slot for this day+time) -> the slot is
+      // disabled or off-schedule. Do NOT fall through to the legacy count:
+      // reject it so a deactivated weekly slot can never be ordered.
     } catch {
-      // Tables missing -> legacy fallback below.
+      // network/DB error -> treat as tables absent for the legacy fallback
+      tablesAbsent = true
     }
-    if (!reservedSlot && !slotId) {
-      // Fallback: no admin schedule found for this slot — apply the legacy cap.
+    if (!tablesAbsent && !reservedSlot && !slotId) {
+      // Admin schedule is active but this exact day+time has no enabled slot.
+      return bad('Sorry, this delivery slot is no longer available. Please choose another slot.')
+    }
+    if (tablesAbsent && !reservedSlot) {
+      // Fallback: no admin schedule table at all — apply the legacy global cap.
       const { count: taken } = await admin
         .from('orders')
         .select('id', { count: 'exact', head: true })

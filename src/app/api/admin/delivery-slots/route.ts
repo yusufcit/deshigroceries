@@ -84,8 +84,9 @@ export async function GET(request: NextRequest) {
     const upcoming = dates.map((date) => {
       const dayWide = ovMap.get(`${date}|`)
       const dayClosed = dayWide?.is_closed === true
+      const dayDow = new Date(`${date}T00:00:00Z`).getUTCDay()
       const slots = (slotsRes.data ?? [])
-        .filter((s: any) => s.is_active)
+        .filter((s: any) => s.is_active && s.day_of_week === dayDow)
         .map((s: any) => {
           const dayOver = ovMap.get(`${date}|${s.id}`)
           const effectiveMax = dayOver?.max_orders ?? s.max_orders
