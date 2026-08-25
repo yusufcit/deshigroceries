@@ -60,5 +60,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not save the address. Please try again.' }, { status: 500 })
   }
 
-  return NextResponse.json({ address }, { status: 201 })
+    return NextResponse.json({ address }, { status: 201 })
+}
+
+/**
+ * GET /api/account/addresses
+ * Returns the signed-in customer's saved delivery addresses (default first).
+ * Used by checkout to pre-fill the address form for returning customers.
+ * RLS ("Users can read own addresses") scopes this to their own rows.
+ */
+export async function GET(request: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Please sign in first.' }, { status: 401 })
+  }
+
+  const { data: addresses, error } = await supabase
+    .from('addresses')
+    .select('*')
+    .eq('customer_id', user.id)
+    .order('is_default', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('address fetch error:', error.message)
+    return NextResponse.json({ error: 'Could not load your addresses.' }, { status: 500 })
+  }
+
+  return NextResponse.json({ addresses: addresses ?? [] })
 }

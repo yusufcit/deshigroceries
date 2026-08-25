@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Package, ShoppingCart, Users, Settings, Tags } from 'lucide-react'
+import { Package, ShoppingCart, Users, Settings, Tags, Calendar } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -127,8 +127,17 @@ export default async function AdminDashboard() {
             className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow"
           >
             <Tags className="w-8 h-8 text-[var(--primary)] mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-1">Categories</h3>
+                        <h3 className="font-semibold text-gray-900 mb-1">Categories</h3>
             <p className="text-sm text-gray-600">Manage categories</p>
+          </Link>
+
+          <Link
+            href="/admin/delivery-slots"
+            className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow"
+          >
+            <Calendar className="w-8 h-8 text-[var(--primary)] mb-3" />
+            <h3 className="font-semibold text-gray-900 mb-1">Delivery Slots</h3>
+            <p className="text-sm text-gray-600">Configure delivery schedule</p>
           </Link>
 
           <Link

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { MarkPaidButton } from './MarkPaidButton'
 
 export default async function AdminOrderDetailPage({
   params,
@@ -9,183 +10,113 @@ export default async function AdminOrderDetailPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
-  
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login?next=/admin/orders')
-
   const { data: adminUser } = await supabase
-    .from('admin_users')
-    .select('*')
-    .eq('id', user.id)
-    .eq('is_active', true)
-    .single()
-
+    .from('admin_users').select('id').eq('id', user.id).eq('is_active', true).single()
   if (!adminUser) redirect('/')
-
   const { data: order } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('id', id)
-    .single()
-
+    .from('orders').select('*').eq('id', id).single()
   if (!order) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Not Found</h1>
-          <Link href="/admin/orders" className="text-[var(--primary)] hover:underline">
-            Back to Orders
-          </Link>
+          <h1 className="text-2xl font-bold mb-2">Order Not Found</h1>
+          <Link href="/admin/orders" className="text-[var(--primary)] hover:underline">Back to Orders</Link>
         </div>
       </div>
     )
   }
-
   const { data: orderItems } = await supabase
-    .from('order_items')
-    .select('*')
-    .eq('order_id', id)
-
-  const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    processing: 'bg-blue-100 text-blue-800',
-    out_for_delivery: 'bg-purple-100 text-purple-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-  }
-
-  const paymentStatusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    paid: 'bg-green-100 text-green-800',
-    failed: 'bg-red-100 text-red-800',
-    refunded: 'bg-gray-100 text-gray-800',
-  }
+    .from('order_items').select('*').eq('order_id', id)
+  const isPOD = order.payment_method === 'pay_on_delivery'
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4 mb-2">
-            <Link href="/admin/orders" className="text-[var(--primary)] hover:underline text-sm">
-              &larr; Back to Orders
-            </Link>
+        <div className="max-w-5xl mx-auto px-4 py-5">
+          <Link href="/admin/orders" className="text-sm text-[var(--primary)] hover:underline">&larr; Back to Orders</Link>
+          <div className="flex items-center justify-between mt-2">
+            <h1 className="text-3xl font-bold">Order #{order.order_number}</h1>
+            <StatusBadge status={order.status} />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Order {order.order_number}</h1>
-          <p className="text-gray-600 mt-1">Order Details</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
-        {/* Order Status */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <label className="text-sm font-medium text-gray-500">Status</label>
-            <p className="mt-1">
-              <span className={`px-3 py-1 text-sm rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
-                {order.status?.replace(/_/g, ' ')}
-              </span>
-            </p>
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-5">
+        <Card title="Customer">
+          <div className="grid md:grid-cols-3 gap-4">
+            <LV label="Name" value={order.customer_name} />
+            <LV label="Email" value={order.customer_email} />
+            <LV label="Phone" value={order.customer_phone || '\u2014'} />
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <label className="text-sm font-medium text-gray-500">Payment</label>
-            <p className="mt-1">
-              <span className={`px-3 py-1 text-sm rounded-full ${paymentStatusColors[order.payment_status] || 'bg-gray-100 text-gray-800'}`}>
-                {order.payment_status}
-              </span>
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <label className="text-sm font-medium text-gray-500">Date</label>
-            <p className="mt-1 text-gray-900">{new Date(order.created_at).toLocaleDateString()}</p>
-          </div>
-        </div>
+          <LV label="Type" value={order.customer_id ? 'Registered' : 'Guest'} />
+        </Card>
 
-        {/* Customer Info */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Customer Information</h2>
+        <Card title="Delivery">
           <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-500">Name</label>
-              <p className="text-gray-900">{order.customer_name}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500">Email</label>
-              <p className="text-gray-900">{order.customer_email}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500">Phone</label>
-              <p className="text-gray-900">{order.customer_phone}</p>
-            </div>
+            <LV label="Date" value={order.delivery_date ? new Date(order.delivery_date + 'T00:00:00Z').toLocaleDateString('en-IE', { weekday:'short', day:'numeric', month:'short', year:'numeric', timeZone:'UTC' }) : '\u2014'} />
+            <LV label="Slot" value={order.delivery_slot || '\u2014'} />
           </div>
-        </div>
+          <LV label="Address" value={[order.delivery_address_line1, order.delivery_address_line2, order.delivery_city + (order.delivery_county ? ', ' + order.delivery_county : ''), order.delivery_eircode].filter(Boolean).join(', ')} />
+          {order.delivery_instructions && <div className="mt-3 p-3 bg-gray-50 rounded text-sm text-gray-600"><span className="font-medium">Note:</span> {order.delivery_instructions}</div>}
+        </Card>
 
-        {/* Delivery Address */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Delivery Address</h2>
-          <div className="space-y-1">
-            <p className="text-gray-900">{order.delivery_address_line1}</p>
-            {order.delivery_address_line2 && <p className="text-gray-900">{order.delivery_address_line2}</p>}
-            <p className="text-gray-900">
-              {order.delivery_city}{order.delivery_county ? `, ${order.delivery_county}` : ''}
-            </p>
-            {order.delivery_eircode && <p className="text-gray-900">{order.delivery_eircode}</p>}
-            {order.delivery_instructions && (
-              <>
-                <label className="block text-sm font-medium text-gray-500 mt-2">Delivery Instructions</label>
-                <p className="text-gray-700">{order.delivery_instructions}</p>
-              </>
-            )}
-          </div>
-        </div>
+        <Card title="Products">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b text-gray-500"><th className="text-left py-2 pr-2 font-medium">Product</th><th className="text-center py-2 px-2 font-medium">Qty</th><th className="text-right py-2 px-2 font-medium">Unit Price</th><th className="text-right py-2 pl-2 font-medium">Total</th></tr></thead>
+            <tbody>{(orderItems ?? []).map((it: any) => (
+              <tr key={it.id} className="border-b last:border-0">
+                <td className="py-2 pr-2"><span className="text-gray-900">{it.product_name}</span>{it.weight_option ? <span className="text-gray-500 ml-1">({it.weight_option})</span> : null}</td>
+                <td className="py-2 px-2 text-center">{it.quantity}</td>
+                <td className="py-2 px-2 text-right">&euro;{it.unit_price?.toFixed(2)}</td>
+                <td className="py-2 pl-2 text-right font-medium">&euro;{it.total_price?.toFixed(2)}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </Card>
 
-        {/* Order Items */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Order Items</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b">
-                <tr>
-                  <th className="text-left py-3 text-sm font-semibold text-gray-600">Product</th>
-                  <th className="text-left py-3 text-sm font-semibold text-gray-600">Weight</th>
-                  <th className="text-center py-3 text-sm font-semibold text-gray-600">Qty</th>
-                  <th className="text-right py-3 text-sm font-semibold text-gray-600">Price</th>
-                  <th className="text-right py-3 text-sm font-semibold text-gray-600">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderItems?.map((item: any) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="py-3 text-gray-900">{item.product_name}</td>
-                    <td className="py-3 text-gray-600">{item.weight_option || '-'}</td>
-                    <td className="py-3 text-center text-gray-900">{item.quantity}</td>
-                    <td className="py-3 text-right text-gray-900">€{item.unit_price?.toFixed(2)}</td>
-                    <td className="py-3 text-right text-gray-900 font-medium">€{item.total_price?.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <Card title="Financial Summary">
+          <div className="max-w-xs ml-auto space-y-2">
+            <Row label="Subtotal" value={'\u20AC' + order.subtotal?.toFixed(2)} />
+            <Row label="Delivery" value={order.delivery_fee === 0 ? 'FREE' : '\u20AC' + order.delivery_fee?.toFixed(2)} />
+            <div className="flex justify-between text-lg font-bold border-t pt-2"><span className="text-gray-600">Total</span><span className="text-[var(--primary)]">&euro;{order.total?.toFixed(2)}</span></div>
           </div>
-        </div>
+        </Card>
 
-        {/* Order Summary */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
-          <div className="space-y-2 max-w-sm ml-auto">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal</span>
-              <span className="text-gray-900">€{order.subtotal?.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Delivery Fee</span>
-              <span className="text-gray-900">€{order.delivery_fee?.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <span className="font-bold text-gray-900">Total</span>
-              <span className="font-bold text-xl text-gray-900">€{order.total?.toFixed(2)}</span>
-            </div>
+        <Card title="Payment">
+          <div className="grid md:grid-cols-3 gap-4">
+            <LV label="Method" value={isPOD ? 'Pay on Delivery' : 'Card'} />
+            <LV label="Status" value={order.payment_status} />
+            <LV label="Paid At" value={order.paid_at ? new Date(order.paid_at).toLocaleString('en-IE') : '\u2014'} />
           </div>
-        </div>
+          {isPOD && order.payment_status === 'pending' && (
+            <div className="mt-5 pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-4 flex-wrap">
+                <p className="text-sm text-gray-600">Pay on Delivery &mdash; mark as <strong>Paid</strong> when payment is collected.</p>
+                <MarkPaidButton orderId={order.id} />
+              </div>
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   )
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5"><h2 className="text-lg font-bold text-gray-900 mb-4">{title}</h2>{children}</div>
+}
+
+function LV({ label, value }: { label: string; value: string }) {
+  return <div><span className="text-xs font-medium text-gray-500 uppercase">{label}</span><p className="text-gray-900 mt-0.5">{value}</p></div>
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return <div className="flex justify-between text-sm"><span className="text-gray-600">{label}</span><span className="text-gray-900">{value}</span></div>
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = { pending:'bg-yellow-100 text-yellow-800', processing:'bg-blue-100 text-blue-800', out_for_delivery:'bg-purple-100 text-purple-800', delivered:'bg-green-100 text-green-800', cancelled:'bg-red-100 text-red-800' }
+  return <span className={'px-3 py-1.5 text-xs font-semibold rounded-full ' + (colors[status] || 'bg-gray-100')}>{status?.replace(/_/g, ' ')}</span>
 }
