@@ -106,7 +106,7 @@ export default function CheckoutFlow() {
   }
 
   if (step === 'auth' && !user && !isGuest) {
-    return <AuthGate canceled={canceled} onGuest={() => setIsGuest(true)} onLogin={() => { setIsGuest(false); window.location.href = '/auth/login?next=/checkout' }} onRegister={() => { setIsGuest(false); window.location.href = '/auth/register?next=/checkout' }} />
+    return <AuthGate canceled={canceled} onGuest={() => { setIsGuest(true); setStep('address') }} onLogin={() => { setIsGuest(false); window.location.href = '/auth/login?next=/checkout' }} onRegister={() => { setIsGuest(false); window.location.href = '/auth/register?next=/checkout' }} />
   }
     if (step === 'auth') return null
   if (step === 'address') return <AddressStep ctx={ctx} onNext={() => setStep('slot')} />
