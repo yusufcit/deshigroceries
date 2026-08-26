@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingCart, User, Menu, X, MapPin, Phone, LayoutGrid } from 'lucide-react'
+import { ShoppingCart, User, Menu, X, MapPin, Phone, LayoutGrid, LogOut } from 'lucide-react'
 import { useState, useEffect, Suspense } from 'react'
 import { useCartStore } from '@/lib/cart-store'
 import { createClient } from '@/lib/supabase/client'
 import { SearchBar } from './SearchBar'
+import { UserAccountMenu } from './UserAccountMenu'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -104,13 +105,17 @@ export function Header() {
             {/* Right actions */}
             <div className="flex items-center gap-2 md:gap-3 ml-auto">
               {/* Account */}
-              <Link
-                href={user ? '/account' : '/auth/login'}
-                className="hidden sm:flex items-center justify-center w-10 h-10 text-gray-600 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-full transition-all duration-200"
-                aria-label={user ? 'Account' : 'Sign in'}
-              >
-                <User className="w-5 h-5" />
-              </Link>
+              {user ? (
+                <UserAccountMenu user={user} />
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="hidden sm:flex items-center justify-center w-10 h-10 text-gray-600 hover:text-[var(--primary)] hover:bg-[var(--primary-lighter)] rounded-full transition-all duration-200"
+                  aria-label="Sign in"
+                >
+                  <User className="w-5 h-5" />
+                </Link>
+              )}
 
               {/* Cart — green pill with total (Borobazar signature) */}
               <Link
@@ -200,6 +205,24 @@ export function Header() {
                 <User className="w-5 h-5" />
                 {user ? 'My Account' : 'Sign In'}
               </Link>
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    createClient()
+                      .auth.signOut()
+                      .then(() => {
+                        window.location.href = '/'
+                      })
+                      .catch(() => {})
+                  }}
+                  className="flex items-center gap-3 px-3 py-3 text-left text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Logout
+                </button>
+              )}
             </div>
           </nav>
         </div>
