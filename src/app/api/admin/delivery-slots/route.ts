@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const from = dates[0]
     const to = dates[dates.length - 1]
 
-    const [slotsRes, ovRes, bkRes] = await Promise.all([
+    const [slotsRes, ovRes, bkRes, resRes] = await Promise.all([
       admin
         .from('delivery_slots')
         .select('id, day_of_week, start_time, end_time, max_orders, is_active, display_order')
@@ -61,6 +61,13 @@ export async function GET(request: NextRequest) {
         .select('booking_date, slot_id, booked_count')
         .gte('booking_date', from)
         .lte('booking_date', to),
+      admin
+        .from('delivery_slot_reservations')
+        .select('delivery_date, delivery_slot_id')
+        .eq('status', 'ACTIVE')
+        .gt('expires_at', new Date().toISOString())
+        .gte('delivery_date', from)
+        .lte('delivery_date', to),
     ])
 
     const schedule = (slotsRes.data ?? []).map((s: any) => ({
@@ -81,6 +88,12 @@ export async function GET(request: NextRequest) {
     const bkMap = new Map<string, number>()
     for (const b of bkRes.data ?? []) bkMap.set(`${b.booking_date}|${b.slot_id}`, b.booked_count)
 
+    const resMap = new Map<string, number>()
+    for (const r of resRes.data ?? []) {
+      const k = `${r.delivery_date}|${r.delivery_slot_id}`
+      resMap.set(k, (resMap.get(k) ?? 0) + 1)
+    }
+
     const upcoming = dates.map((date) => {
       const dayWide = ovMap.get(`${date}|`)
       const dayClosed = dayWide?.is_closed === true
@@ -91,7 +104,9 @@ export async function GET(request: NextRequest) {
           const dayOver = ovMap.get(`${date}|${s.id}`)
           const effectiveMax = dayOver?.max_orders ?? s.max_orders
           const booked = bkMap.get(`${date}|${s.id}`) ?? 0
-          const remaining = Math.max(effectiveMax - booked, 0)
+          // Active card reservations hold capacity but are NOT confirmed orders.
+          const reservations = resMap.get(`${date}|${s.id}`) ?? 0
+          const remaining = Math.max(effectiveMax - booked - reservations, 0)
           return {
             id: s.id,
             label: slotLabel(s.start_time, s.end_time),
@@ -99,6 +114,7 @@ export async function GET(request: NextRequest) {
             endTime: s.end_time,
             maxOrders: effectiveMax,
             booked,
+            reservations,
             remaining,
             isClosed: dayOver?.is_closed === true,
             override: dayOver

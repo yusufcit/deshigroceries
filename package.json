@@ -11,6 +11,7 @@
     "import:umami": "node scripts/run-supabase-sql.mjs umami-foods-import.sql",
     "import:umami:rest": "node scripts/import-umami-rest.mjs",
     "import:verify": "node scripts/verify-import.mjs",
+    "import:slot-reservations": "node scripts/run-supabase-sql.mjs supabase-slot-reservations-migration.sql",
     "fix:rls": "node scripts/run-supabase-sql.mjs fix-rls-policies.sql",
     "fix:category-images": "node scripts/fix-category-images.mjs",
     "fix:category-images:sql": "node scripts/run-supabase-sql.mjs fix-category-images.sql"

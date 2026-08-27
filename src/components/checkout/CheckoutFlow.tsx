@@ -90,9 +90,28 @@ export default function CheckoutFlow() {
       const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const j = await res.json()
       if (!res.ok) { toast.error(j.error || 'Could not place your order.'); setLoading(false); return }
+
+      if (pm === 'card') {
+        // Redirect to Stripe WITHOUT clearing the cart. The cart must survive the
+        // Stripe redirect so a cancelled/failed/expired payment leaves it intact.
+        // The cart is only cleared once the Stripe webhook confirms payment as
+        // PAID (handled on the success page via the order's payment_status).
+        if (j.checkoutUrl) {
+          window.location.href = j.checkoutUrl
+        } else {
+          // No session URL returned (shouldn't normally happen) — fall back to
+          // the success page, which will clear the cart only if the order is
+          // actually confirmed/paid.
+          toast.success('Order placed successfully!')
+          router.push(j.redirect || `/checkout/success?order_id=${j.orderId}`)
+        }
+        return
+      }
+
+      // Pay on Delivery: the order has been created and confirmed on the server —
+      // it is now safe to clear the cart.
       clearCart()
       toast.success('Order placed successfully!')
-      if (pm === 'card' && j.checkoutUrl) { window.location.href = j.checkoutUrl; return }
       router.push(j.redirect || `/checkout/success?order_id=${j.orderId}`)
     } catch { toast.error('Something went wrong. Please try again.'); setLoading(false) }
   }
@@ -105,11 +124,33 @@ export default function CheckoutFlow() {
     )
   }
 
-  if (step === 'auth' && !user && !isGuest) {
-    return <AuthGate canceled={canceled} onGuest={() => { setIsGuest(true); setStep('address') }} onLogin={() => { setIsGuest(false); window.location.href = '/auth/login?next=/checkout' }} onRegister={() => { setIsGuest(false); window.location.href = '/auth/register?next=/checkout' }} />
-  }
-    if (step === 'auth') return null
-  if (step === 'address') return <AddressStep ctx={ctx} onNext={() => setStep('slot')} />
-  if (step === 'slot') return <SlotStep ctx={ctx} onNext={() => setStep('payment')} onBack={() => setStep('address')} />
-  return <PaymentStep ctx={ctx} onBack={() => setStep('slot')} onSubmit={submit} />
+  const banner = canceled ? (
+    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 text-amber-800">
+      <h2 className="font-bold text-amber-900 text-lg mb-1">Payment Not Completed</h2>
+      <p className="text-sm">
+        Your payment was not completed. Don&rsquo;t worry — your items are still
+        saved in your cart. You can return to checkout and try again.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Link href="/cart" className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold rounded-xl border-2 border-amber-700 text-amber-900 hover:bg-amber-100 transition-colors">
+          View Cart
+        </Link>
+      </div>
+    </div>
+  ) : null
+
+  return (
+    <div className="w-full">
+      {banner}
+      {step === 'auth' && !user && !isGuest ? (
+        <AuthGate canceled={canceled} onGuest={() => { setIsGuest(true); setStep('address') }} onLogin={() => { setIsGuest(false); window.location.href = '/auth/login?next=/checkout' }} onRegister={() => { setIsGuest(false); window.location.href = '/auth/register?next=/checkout' }} />
+      ) : step === 'auth' ? null : step === 'address' ? (
+        <AddressStep ctx={ctx} onNext={() => setStep('slot')} />
+      ) : step === 'slot' ? (
+        <SlotStep ctx={ctx} onNext={() => setStep('payment')} onBack={() => setStep('address')} />
+      ) : (
+        <PaymentStep ctx={ctx} onBack={() => setStep('slot')} onSubmit={submit} />
+      )}
+    </div>
+  )
 }

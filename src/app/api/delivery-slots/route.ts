@@ -57,7 +57,8 @@ export async function GET(_request: NextRequest) {
     const from = dates[0]
     const to = dates[dates.length - 1]
 
-    const [sched, ovs, bks] = await Promise.all([
+    const nowIso = new Date().toISOString()
+    const [sched, ovs, bks, resv] = await Promise.all([
       admin
         .from('delivery_slots')
         .select('id, day_of_week, start_time, end_time, max_orders, is_active, display_order')
@@ -73,6 +74,15 @@ export async function GET(_request: NextRequest) {
         .select('booking_date, slot_id, booked_count')
         .gte('booking_date', from)
         .lte('booking_date', to),
+      // Only ACTIVE, unexpired holdings block capacity (lazy expiry: rows that
+      // have past expires_at are ignored even before any cleanup job runs).
+      admin
+        .from('delivery_slot_reservations')
+        .select('delivery_date, delivery_slot_id')
+        .eq('status', 'ACTIVE')
+        .gt('expires_at', nowIso)
+        .gte('delivery_date', from)
+        .lte('delivery_date', to),
     ])
 
     // Migration not applied (or empty schedule) → previous hard-coded behaviour
@@ -83,6 +93,12 @@ export async function GET(_request: NextRequest) {
     const bookedMap = new Map<string, number>()
     for (const b of bks.data ?? []) {
       bookedMap.set(`${b.booking_date}|${b.slot_id}`, b.booked_count)
+    }
+    // Active card reservations also block capacity until they expire.
+    const reserveMap = new Map<string, number>()
+    for (const r of resv.data ?? []) {
+      const k = `${r.delivery_date}|${r.delivery_slot_id}`
+      reserveMap.set(k, (reserveMap.get(k) ?? 0) + 1)
     }
     const overrideMap = new Map<string, { is_closed: boolean; max_orders: number | null }>()
     for (const o of ovs.data ?? []) {
@@ -107,7 +123,10 @@ export async function GET(_request: NextRequest) {
           }
           const max = ov && ov.max_orders != null ? ov.max_orders : s.max_orders
           const booked = bookedMap.get(`${date}|${s.id}`) ?? 0
-          const remaining = max != null ? Math.max(max - booked, 0) : null
+          // A live card reservation occupies one unit; a slot is only truly
+          // free while booked + reserved < capacity.
+          const reserved = reserveMap.get(`${date}|${s.id}`) ?? 0
+          const remaining = max != null ? Math.max(max - booked - reserved, 0) : null
           return {
             id: s.id,
             label: slotLabel(s.start_time, s.end_time),

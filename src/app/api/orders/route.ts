@@ -3,7 +3,7 @@ import { stripe } from '@/lib/stripe-server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateOrderNumber } from '@/lib/utils'
-import { isValidSlotChoice, calcDeliveryFee, slotLabel, getSlotCapacity } from '@/lib/delivery-slots'
+import { isValidSlotChoice, calcDeliveryFee, slotLabel, getSlotCapacity, CARD_SLOT_RESERVATION_MINUTES } from '@/lib/delivery-slots'
 import { queueOrSendOrderConfirmation } from '@/lib/email'
 
 // ---------------------------------------------------------------------------
@@ -147,6 +147,9 @@ export async function POST(request: NextRequest) {
     let slotId: string | null = null
     let reservedSlot = false
     let tablesAbsent = false
+    // Card orders hold a temporary 15-minute reservation; POD consumes capacity
+    // permanently. This variable tracks the temporary reservation id when used.
+    let cardReservationId: string | null = null
     try {
       const { data: slotRow, error: slotErr } = await admin
         .from('delivery_slots')
@@ -161,9 +164,23 @@ export async function POST(request: NextRequest) {
         tablesAbsent = true
       } else if (slotRow?.id) {
         slotId = slotRow.id as string
-        const { data: ok } = await admin
-          .rpc('reserve_delivery_slot', { p_date: deliveryDate, p_slot_id: slotId })
-        reservedSlot = ok === true
+        if (paymentMethod === 'card') {
+          // Temporarily hold the slot for the 15-minute Stripe window. This RPC
+          // is row-locked and capacity-aware, so two customers racing for the
+          // final position can never both succeed.
+          const expiresAt = new Date(Date.now() + CARD_SLOT_RESERVATION_MINUTES * 60_000).toISOString()
+          const { data: rid } = await admin.rpc('reserve_delivery_slot_reservation', {
+            p_date: deliveryDate,
+            p_slot_id: slotId,
+            p_expires_at: expiresAt,
+          })
+          cardReservationId = typeof rid === 'string' && rid ? rid : null
+          reservedSlot = cardReservationId !== null
+        } else {
+          // Pay on Delivery: capacity is consumed permanently and atomically.
+          const { data: ok } = await admin.rpc('reserve_delivery_slot', { p_date: deliveryDate, p_slot_id: slotId })
+          reservedSlot = ok === true
+        }
       }
       // slotRow is null (no active slot for this day+time) -> the slot is
       // disabled or off-schedule. Do NOT fall through to the legacy count:
@@ -190,9 +207,17 @@ export async function POST(request: NextRequest) {
       return bad('Sorry, this delivery slot is no longer available. Please choose another slot.')
     }
     // Frees the reserved unit if any later step fails (never double-releases).
+    // For card orders this releases the 15-minute reservation; for Pay on
+    // Delivery it gives the permanently-consumed capacity back.
     const releaseSlot = async () => {
-      if (reservedSlot && slotId) {
-        reservedSlot = false
+      if (!reservedSlot) return
+      reservedSlot = false
+      if (cardReservationId) {
+        await admin.rpc('release_delivery_slot_reservation', { p_reservation_id: cardReservationId }).then(
+          () => {},
+          () => {}
+        )
+      } else if (slotId) {
         await admin.rpc('release_delivery_slot', { p_date: deliveryDate, p_slot_id: slotId }).then(
           () => {},
           () => {}
@@ -233,10 +258,24 @@ export async function POST(request: NextRequest) {
       .single()
     if (orderErr || !order) return bad('Could not create your order. Please try again.', 503)
 
+    // Link the card reservation to the newly-created order so the Stripe
+    // webhook can find and confirm it later. (POD orders have no reservation.)
+    if (cardReservationId) {
+      await admin
+        .from('delivery_slot_reservations')
+        .update({ order_id: order.id })
+        .eq('id', cardReservationId)
+        .then(
+          () => {},
+          () => {}
+        )
+    }
+
     const { error: itemsErr } = await admin
       .from('order_items')
       .insert(lines.map((l) => ({ ...l, order_id: order.id })))
     if (itemsErr) {
+      await releaseSlot()
       await admin.from('orders').delete().eq('id', order.id)
       return bad('Could not save your order items. Please try again.', 503)
     }
@@ -315,14 +354,18 @@ export async function POST(request: NextRequest) {
     } catch (stripeErr) {
       console.error('[orders POST] stripe session failed:', stripeErr instanceof Error ? stripeErr.message : stripeErr)
       // No orphan orders: remove the staged order entirely so the customer can
-      // cleanly retry (with POD or once payment is available again).
+      // cleanly retry (with POD or once payment is available again). The
+      // 15-minute reservation is released so the slot becomes free again.
+      await releaseSlot()
       await admin.from('order_items').delete().eq('order_id', order.id)
       await admin.from('orders').delete().eq('id', order.id)
       return bad('Payment is temporarily unavailable. Please choose Pay on Delivery or try again shortly.', 503)
     }
 
     await admin.from('orders').update({ stripe_session_id: session.id }).eq('id', order.id)
-    queueOrSendOrderConfirmation(order.id) // non-blocking, never throws
+    // NOTE: no confirmation email is sent here for card orders. The email is only
+    // sent after the Stripe webhook confirms the payment (PAID) so we never email a
+    // "payment received" copy for an abandoned/cancelled card session.
     return NextResponse.json({
       orderId: order.id,
       orderNumber: order.order_number,

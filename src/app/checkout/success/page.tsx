@@ -18,19 +18,49 @@ function SuccessContent() {
   const clearCart = useCartStore((state) => state.clearCart)
 
   useEffect(() => {
-    // Cart was already cleared in CheckoutFlow after order creation.
-    // This is a safety net in case the user refreshes the success page.
-    clearCart()
     if (!orderId) { setLoading(false); setFetchError(true); return }
-    fetch(`/api/orders/${orderId}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error('Not found')
-        const data = await res.json()
-        if (data.order) setOrder(data.order as Order)
-        else setFetchError(true)
-      })
-      .catch(() => setFetchError(true))
-      .finally(() => setLoading(false))
+
+    let cancelled = false
+    let attempts = 0
+
+    const load = () => {
+      fetch(`/api/orders/${orderId}`)
+        .then(async (res) => {
+          if (!res.ok) throw new Error('Not found')
+          const data = await res.json()
+          if (!data.order) throw new Error('No order')
+          const o = data.order as Order
+          setOrder(o)
+
+          // Cart is cleared ONLY when the backend confirms the order completed:
+          //  - Pay on Delivery: order created/placed.
+          //  - Card: the Stripe webhook confirmed payment as PAID.
+          // A card order still pending (webhook not yet delivered) keeps the cart.
+          const completed =
+            o.payment_method === 'pay_on_delivery' || o.payment_status === 'paid'
+          if (completed) {
+            clearCart()
+            setLoading(false)
+            return
+          }
+
+          // Card order awaiting webhook confirmation — poll briefly so the page
+          // catches up once Stripe confirms, then clears the cart.
+          if (o.payment_method === 'card' && attempts < 10 && !cancelled) {
+            attempts += 1
+            setTimeout(load, 1500)
+            return
+          }
+
+          setLoading(false)
+        })
+        .catch(() => {
+          if (!cancelled) { setFetchError(true); setLoading(false) }
+        })
+    }
+
+    load()
+    return () => { cancelled = true }
   }, [orderId, clearCart])
 
   if (loading) {

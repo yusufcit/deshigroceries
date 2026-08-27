@@ -21,6 +21,14 @@ export const DELIVERY_SLOT_TIMES = [
 
 export type DeliverySlot = (typeof DELIVERY_SLOT_TIMES)[number]
 
+/**
+ * How long a Card checkout temporarily holds a delivery slot while the customer
+ * completes Stripe Checkout. The reservation auto-expires after this even if
+ * the customer abandons payment — the DB stores `expires_at` and every
+ * availability/confirm query filters on it (lazy expiry, no cron required).
+ */
+export const CARD_SLOT_RESERVATION_MINUTES = 15
+
 /** How many days ahead customers can book (day 1 = tomorrow). */
 const BOOKING_WINDOW_DAYS = 7
 

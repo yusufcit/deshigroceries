@@ -20,6 +20,7 @@ type Override = { isClosed: boolean; maxOrders: number | null; note: string | nu
 
 type SlotView = Slot & {
   booked: number
+  reservations: number
   remaining: number | null
   isClosed: boolean
   override: Override | null
@@ -307,7 +308,7 @@ export default function DeliverySlotsAdminPage() {
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Upcoming days</h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    Booked vs capacity, plus date-specific overrides for the next {days} days.
+                    Confirmed + active card reservations vs capacity, plus date-specific overrides for the next {days} days.
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => setDays(days === 7 ? 14 : 7)}>
@@ -362,8 +363,9 @@ export default function DeliverySlotsAdminPage() {
                                     {s.isClosed && <span className="ml-2 text-xs font-bold text-red-600">CLOSED</span>}
                                   </p>
                                   <p className="text-xs text-gray-500 mt-0.5">
-                                    {s.booked}/{s.maxOrders} booked
-                                    {s.remaining !== null && ` · ${s.remaining} left`}
+                                    {s.booked}/{s.maxOrders} confirmed
+                                    {s.reservations > 0 && ` · ${s.reservations} card reserved`}
+                                    {s.remaining !== null && ` · ${s.remaining} available`}
                                     {s.override?.maxOrders != null && ' · overridden'}
                                   </p>
                                 </div>

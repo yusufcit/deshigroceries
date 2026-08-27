@@ -35,6 +35,11 @@ export default function PaymentStep({ ctx, onBack, onSubmit }: { ctx: CheckoutCt
                 <span className="text-2xl">💳</span>
                 <div><span className="font-semibold text-gray-900">Pay by Card</span><p className="text-sm text-gray-500">Pay securely online now</p></div>
               </label>
+              {pm === 'card' && (
+                <p className="text-xs text-gray-500 pl-2 -mt-1">
+                  Your delivery slot will be held for 15 minutes while you complete payment.
+                </p>
+              )}
               <label className="flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer">
                 <input type="radio" name="pm" checked={pm === 'pay_on_delivery'} onChange={() => setPm('pay_on_delivery')} className="h-4 w-4 text-[var(--primary)] focus:ring-[var(--primary)]" />
                 <span className="text-2xl">💵</span>
