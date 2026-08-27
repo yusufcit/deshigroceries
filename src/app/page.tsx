@@ -51,8 +51,8 @@ export default async function Home() {
   return (
     <div className="w-full bg-white">
       {/* ═══════════ 1. HERO ═══════════ */}
-      <section className="my-8 md:my-12 w-full bg-gradient-to-br from-[var(--primary-lighter)] via-white to-amber-50/60">
-        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 lg:py-20">
+      <section className="mb-4 md:mb-6 w-full bg-gradient-to-br from-[var(--primary-lighter)] via-white to-amber-50/60">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 lg:py-12">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
             {/* Copy */}
             <div>
@@ -143,7 +143,7 @@ export default async function Home() {
 
       {/* ═══════════ 2. SHOP BY CATEGORY ═══════════ */}
       {categories.length > 0 && (
-        <section className="my-8 md:my-12 w-full py-14 md:py-20">
+        <section className="my-3 md:my-4 w-full py-6 md:py-10">
           <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -196,7 +196,7 @@ export default async function Home() {
 
       {/* ═══════════ 3. THIS WEEK'S OFFERS (Sale carousel) ═══════════ */}
       {saleProducts.length > 0 && (
-        <section className="my-8 md:my-12 w-full py-14 md:py-20 bg-gradient-to-br from-red-50/70 via-amber-50/40 to-white">
+        <section className="my-3 md:my-4 w-full py-6 md:py-10 bg-gradient-to-br from-red-50/70 via-amber-50/40 to-white">
           <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -235,7 +235,7 @@ export default async function Home() {
 
       {/* ═══════════ 4. POPULAR PRODUCTS ═══════════ */}
       {popularProducts.length > 0 && (
-        <section className="my-8 md:my-12 w-full py-14 md:py-20">
+        <section className="my-3 md:my-4 w-full py-6 md:py-10">
           <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -269,7 +269,7 @@ export default async function Home() {
       )}
 
       {/* ═══════════ 5. PROMO BANNER ═══════════ */}
-      <section className="my-8 md:my-12 w-full py-8 md:py-14">
+      <section className="my-3 md:my-4 w-full py-6 md:py-10">
         <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
           <PromoBanner
             title="Fresh Halal Meat for Every Family Meal"
@@ -284,7 +284,7 @@ export default async function Home() {
 
       {/* ═══════════ 6. COLLECTION: FRESH MEAT ═══════════ */}
       {meatProducts.length > 0 && (
-        <section className="my-8 md:my-12 w-full py-14 md:py-20 bg-[var(--background-alt)]">
+        <section className="my-3 md:my-4 w-full py-6 md:py-10 bg-[var(--background-alt)]">
           <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -321,7 +321,7 @@ export default async function Home() {
 
       {/* ═══════════ 7. COLLECTION: PANTRY ESSENTIALS ═══════════ */}
       {pantryProducts.length > 0 && (
-        <section className="my-8 md:my-12 w-full py-14 md:py-20">
+        <section className="my-3 md:my-4 w-full py-6 md:py-10">
           <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -358,7 +358,7 @@ export default async function Home() {
 
       {/* ═══════════ 8. COLLECTION: FROZEN FAVOURITES ═══════════ */}
       {frozenProducts.length > 0 && (
-        <section className="my-8 md:my-12 w-full py-14 md:py-20 bg-[var(--background-alt)]">
+        <section className="my-3 md:my-4 w-full py-6 md:py-10 bg-[var(--background-alt)]">
           <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-8">
               <div>
@@ -396,7 +396,7 @@ export default async function Home() {
 
       {/* ═══════════ 9. SECOND PROMO BANNER ═══════════ */}
       {pantryProducts.length > 0 && (
-        <section className="my-8 md:my-12 w-full py-8 md:py-14">
+        <section className="my-3 md:my-4 w-full py-6 md:py-10">
           <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
             <PromoBanner
               title="Authentic Spices & Pantry Staples"
@@ -410,7 +410,7 @@ export default async function Home() {
       )}
 
       {/* ═══════════ 10. WHY CHOOSE US ═══════════ */}
-      <section id="why-us" className="my-8 md:my-12 w-full py-14 md:py-20 bg-[var(--background-alt)]">
+      <section id="why-us" className="my-3 md:my-4 w-full py-6 md:py-10 bg-[var(--background-alt)]">
         <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 md:mb-12">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -435,7 +435,7 @@ export default async function Home() {
       </section>
 
       {/* ═══════════ 11. DELIVERY INFO ═══════════ */}
-      <section id="delivery" className="my-8 md:my-12 w-full py-14 md:py-20">
+      <section id="delivery" className="my-3 md:my-4 w-full py-6 md:py-10">
         <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div>
@@ -490,8 +490,8 @@ export default async function Home() {
       </section>
 
       {/* ═══════════ 12. FINAL CTA ═══════════ */}
-      <section className="my-8 md:my-12 w-full bg-[var(--primary-dark)] relative overflow-hidden">
-        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center relative">
+      <section className="my-3 md:my-4 w-full bg-[var(--primary-dark)] relative overflow-hidden">
+        <div className="container-custom mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 text-center relative">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Your Weekly Groceries, Made Easy.
           </h2>
