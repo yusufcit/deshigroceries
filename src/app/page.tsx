@@ -118,7 +118,8 @@ export default async function Home() {
                   />
                 </div>
               )}
-              <div className="absolute -bottom-5 -left-4 md:-left-8 bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3">
+              {/* Lowered to -bottom-14 so it clears the text */}
+              <div className="absolute -bottom-14 -left-4 md:-left-8 bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3">
                 <div className="w-11 h-11 rounded-xl bg-[var(--primary-lighter)] flex items-center justify-center">
                   <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
                 </div>
