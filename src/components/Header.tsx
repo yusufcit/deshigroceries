@@ -78,9 +78,14 @@ export function Header() {
           <div className="flex items-center gap-3 md:gap-6 h-16 lg:h-[72px]">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-              <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center shadow-[var(--shadow-green)] transition-transform duration-300 group-hover:scale-105">
-                <span className="text-white text-lg font-extrabold tracking-tight">DG</span>
-              </div>
+              {/* Logo image (public/logo.png). Falls back to showing nothing if
+                  the file is missing so the header never breaks. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo.png"
+                alt="Deshi Grocery"
+                className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              />
               <div className="hidden sm:flex flex-col">
                 <span className="text-lg font-extrabold text-gray-900 leading-none tracking-tight">
                   Deshi Grocery

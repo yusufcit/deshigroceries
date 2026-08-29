@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Deshi Grocery - Fresh Halal Meat & Fish Delivery in Dublin",
   description: "Order fresh halal chicken, lamb, beef, and fish online with home delivery in Dublin, Ireland. Premium quality halal groceries at competitive prices.",
   keywords: "halal grocery, halal meat, halal fish, Dublin, Ireland, home delivery, online grocery",
+  icons: {
+    apple: "/logo.png",
+  },
   openGraph: {
     title: "Deshi Grocery - Fresh Halal Meat & Fish Delivery",
     description: "Premium halal groceries delivered to your door in Dublin",

@@ -47,8 +47,13 @@ export function Footer() {
             {/* About Column */}
             <div className="lg:col-span-1">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-extrabold tracking-tight">DG</span>
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg p-1.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/logo.png"
+                    alt="Deshi Grocery"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">Deshi Grocery</h3>
